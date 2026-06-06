@@ -1,6 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic({ apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY });
+let _client;
+function getClient() {
+  if (!_client) _client = new Anthropic({ apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY });
+  return _client;
+}
 
 function extractJson(text) {
   // 마크다운 코드블록 안의 JSON 추출
@@ -13,7 +17,7 @@ function extractJson(text) {
 }
 
 export async function validateSubwayLeg({ line, fromStation, toStation, departureTime }) {
-  const resp = await client.messages.create({
+  const resp = await getClient().messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 400,
     system: `당신은 서울 지하철 막차 종착역 전문가입니다. 아래 핵심 사실을 반드시 적용하세요:
