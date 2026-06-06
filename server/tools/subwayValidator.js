@@ -1,10 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from "@anthropic-ai/sdk";
 
-let _client;
-function getClient() {
-  if (!_client) _client = new Anthropic({ apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY });
-  return _client;
-}
+const client = new Anthropic({
+  apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY,
+});
 
 function extractJson(text) {
   // 마크다운 코드블록 안의 JSON 추출
@@ -16,8 +14,13 @@ function extractJson(text) {
   return text.trim();
 }
 
-export async function validateSubwayLeg({ line, fromStation, toStation, departureTime }) {
-  const resp = await getClient().messages.create({
+export async function validateSubwayLeg({
+  line,
+  fromStation,
+  toStation,
+  departureTime,
+}) {
+  const resp = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 400,
     system: `당신은 서울 지하철 막차 종착역 전문가입니다. 아래 핵심 사실을 반드시 적용하세요:
@@ -32,15 +35,22 @@ export async function validateSubwayLeg({ line, fromStation, toStation, departur
 출발시각이 22:30 이후라면 막차 종착으로 인한 도달 불가 가능성을 반드시 검토하세요.
 
 응답은 반드시 순수 JSON만. 마크다운 코드블록(\`\`\`json) 사용 금지.`,
-    messages: [{
-      role: "user",
-      content: `노선: ${line}\n출발역: ${fromStation}\n목적역: ${toStation}\n출발시각: ${departureTime}\n\n이 시각에 이 열차가 목적역까지 실제로 도달할 수 있는지 판단하세요.\nfeasible이 false인 경우, 이 구간을 지하철로 통과할 수 있는 가장 늦은 출발 시각(HH:MM)을 latestSafeDeparture에 반환하세요. 알 수 없으면 null.\n\n{"feasible":bool,"terminus":"도달 불가 시 실제 종착역명(예:사당역)","reason":"판단 근거 한 줄","latestSafeDeparture":"HH:MM 또는 null"}`,
-    }],
+    messages: [
+      {
+        role: "user",
+        content: `노선: ${line}\n출발역: ${fromStation}\n목적역: ${toStation}\n출발시각: ${departureTime}\n\n이 시각에 이 열차가 목적역까지 실제로 도달할 수 있는지 판단하세요.\nfeasible이 false인 경우, 이 구간을 지하철로 통과할 수 있는 가장 늦은 출발 시각(HH:MM)을 latestSafeDeparture에 반환하세요. 알 수 없으면 null.\n\n{"feasible":bool,"terminus":"도달 불가 시 실제 종착역명(예:사당역)","reason":"판단 근거 한 줄","latestSafeDeparture":"HH:MM 또는 null"}`,
+      },
+    ],
   });
   try {
     const raw = resp.content[0].text;
     return JSON.parse(extractJson(raw));
   } catch {
-    return { feasible: true, terminus: null, reason: "파싱 실패 — 안전하게 통과", latestSafeDeparture: null };
+    return {
+      feasible: true,
+      terminus: null,
+      reason: "파싱 실패 — 안전하게 통과",
+      latestSafeDeparture: null,
+    };
   }
 }

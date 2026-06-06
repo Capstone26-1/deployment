@@ -1,10 +1,17 @@
-const SERVER_URL = process.env.REACT_APP_API_URL !== undefined ? process.env.REACT_APP_API_URL : "http://localhost:3001";
+const SERVER_URL =
+  process.env.REACT_APP_API_URL !== undefined
+    ? process.env.REACT_APP_API_URL
+    : "http://localhost:3001";
 
 export async function runAgent(userMessage, history, onStep, sessionId) {
   const response = await fetch(`${SERVER_URL}/api/agent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: userMessage, history: history || [], sessionId }),
+    body: JSON.stringify({
+      message: userMessage,
+      history: history || [],
+      sessionId,
+    }),
   });
 
   if (!response.ok) throw new Error(`서버 오류: ${response.status}`);

@@ -147,7 +147,6 @@ function getSystemPrompt() {
 news_context_tool은 항상 호출되며, 결과의 issues 배열에 따라 추가 MCP 도구를 호출합니다:
 - issues에 '날씨'      → weather_alert_tool 호출 (사용자가 날씨를 언급한 경우도 포함)
 - issues에 '도로통제'  → road_incident_tool 호출 (경로 비정상 시 포함)
-- issues에 '행사혼잡'  → public_event_tool 호출 (잠실·상암·고척·올림픽공원 인근도 포함)
 - **transit_disruption_tool을 issues와 무관하게 항상 반드시 호출합니다** (출발역 기준). 시간대와 상관없이 매번 막차 여부·실시간 운행 상황을 확인합니다.
 - **조회 시각이 22:00 이후이고 경로에 환승이 있는 경우**, search_transit_route 결과의 각 SUBWAY/BUS leg 도착역(toName) 중 최종 목적지가 아닌 환승역마다 transit_disruption_tool을 추가 호출하여 해당 역의 운행 상황과 lastTrainDestination을 확인하세요.
 

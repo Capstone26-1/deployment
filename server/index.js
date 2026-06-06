@@ -13,7 +13,7 @@ import { runAgent, createSessionCache } from "./claude.js";
 const app = express();
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:3000"];
+  : ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"];
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
