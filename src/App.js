@@ -9,7 +9,6 @@ const TOOL_REGISTRY = [
   { name: "weather_alert_tool",      desc: "기상 특보 · 강수 위험도 (기상청)" },
   { name: "road_incident_tool",      desc: "도로 돌발상황 · 통제 (국토부 ITS)" },
   { name: "transit_disruption_tool", desc: "지하철 실시간 지연 · 혼잡 (서울)" },
-  { name: "public_event_tool",       desc: "대형 행사 혼잡 · 관중 (Demo)" },
   { name: "news_context_tool",       desc: "교통 이슈 원인 뉴스 검색 (네이버)" },
 ];
 

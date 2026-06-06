@@ -226,48 +226,6 @@ async function validateTransitRouteHandler({ legs, departureTime, endX, endY, fi
   };
 }
 
-function publicEventHandler({ location }) {
-  const EVENTS = {
-    잠실: {
-      eventName: "LG vs KT 야구 경기",
-      estimatedCrowd: 25000,
-      endTime: "22:30",
-      affectedLines: ["2호선"],
-    },
-    상암: {
-      eventName: "K리그 경기",
-      estimatedCrowd: 40000,
-      endTime: "22:00",
-      affectedLines: ["6호선"],
-    },
-    고척: {
-      eventName: "KBO 야구 경기",
-      estimatedCrowd: 18000,
-      endTime: "22:00",
-      affectedLines: ["1호선", "7호선"],
-    },
-    올림픽공원: {
-      eventName: "대형 콘서트",
-      estimatedCrowd: 20000,
-      endTime: "22:30",
-      affectedLines: ["5호선", "8호선"],
-    },
-  };
-
-  for (const [keyword, data] of Object.entries(EVENTS)) {
-    if (location.includes(keyword)) {
-      return { hasEvent: true, ...data };
-    }
-  }
-
-  return {
-    hasEvent: false,
-    eventName: "",
-    estimatedCrowd: 0,
-    endTime: "",
-    affectedLines: [],
-  };
-}
 
 function taxiFareHandler({ startX, startY, endX, endY, startName, endName }) {
   const result = estimateTaxiFare({ startX, startY, endX, endY });
@@ -396,21 +354,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: "public_event_tool",
-    description:
-      "대형 공연·스포츠 행사로 인한 혼잡을 조회합니다. 잠실·상암·고척 등 대형 경기장 인근 역이 포함될 때 호출하세요.",
-    input_schema: {
-      type: "object",
-      properties: {
-        location: {
-          type: "string",
-          description: "경기장/행사 인근 지역명 (예: 잠실, 상암, 고척)",
-        },
-      },
-      required: ["location"],
-    },
-  },
-  {
     name: "taxi_fare_tool",
     description:
       "두 지점 간 택시 예상 요금을 계산합니다. search_transit_route가 available: false를 반환했거나, 경로는 있으나 riskScore ≥ 70이고 조회 시각이 22:00 이후인 경우 반드시 호출하세요.",
@@ -461,7 +404,6 @@ export async function executeMcpTool(name, input) {
   if (name === "road_incident_tool") return await roadIncidentHandler(input);
   if (name === "transit_disruption_tool")
     return await transitDisruptionHandler(input);
-  if (name === "public_event_tool") return publicEventHandler(input);
   if (name === "news_context_tool") return await newsContextHandler(input);
   if (name === "taxi_fare_tool") return taxiFareHandler(input);
   if (name === "validate_transit_route") return await validateTransitRouteHandler(input);
@@ -477,10 +419,6 @@ export function summarizeMcpTool(name, result) {
       : "도로 정상";
   if (name === "transit_disruption_tool")
     return `${result.stationName}역 열차 ${result.trains.length}편 조회${result.isLastTrain ? " (막차 포함)" : ""}`;
-  if (name === "public_event_tool")
-    return result.hasEvent
-      ? `행사: ${result.eventName} (관중 ${result.estimatedCrowd.toLocaleString()}명)`
-      : "주변 행사 없음";
   if (name === "news_context_tool")
     return result.hasIssue
       ? `뉴스 이슈 감지 (${result.issues.join(", ")}): ${result.headlines[0] || ""}`
