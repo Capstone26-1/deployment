@@ -227,6 +227,37 @@ async function validateTransitRouteHandler({ legs, departureTime, endX, endY, fi
 }
 
 
+function conditionAssessmentHandler({ conditionType, severity, detectedKeywords }) {
+  const RISK_TABLE = {
+    음주: { mild: 10, moderate: 20, severe: 30 },
+    피로: { mild: 10, moderate: 15, severe: 20 },
+    부상: { mild: 10, moderate: 15, severe: 20 },
+  };
+
+  const riskModifier = RISK_TABLE[conditionType]?.[severity] ?? 10;
+
+  const DESCRIPTIONS = {
+    음주: { mild: "가벼운 음주 상태", moderate: "적당한 음주 상태", severe: "만취 상태" },
+    피로: { mild: "약간 피로한 상태", moderate: "상당히 피로한 상태", severe: "극도로 피로한 상태" },
+    부상: { mild: "경미한 부상", moderate: "중간 정도 부상", severe: "심한 부상" },
+  };
+
+  const WARNINGS = {
+    음주: "음주 상태에서는 균형 감각과 판단력이 저하됩니다. 대중교통 이용 시 각별히 주의하세요.",
+    피로: "피로 상태에서는 졸음과 반응속도 저하가 발생할 수 있습니다. 안전한 귀가를 위해 여유 있는 출발을 권장합니다.",
+    부상: "부상 상태에서는 이동 속도가 느려질 수 있습니다. 환승 시간을 넉넉히 잡으세요.",
+  };
+
+  return {
+    conditionType,
+    severity,
+    riskModifier,
+    description: DESCRIPTIONS[conditionType]?.[severity] ?? `${conditionType} 상태`,
+    detectedKeywords: detectedKeywords || "",
+    warning: WARNINGS[conditionType] ?? "컨디션 이상 감지. 귀가 시 주의하세요.",
+  };
+}
+
 function taxiFareHandler({ startX, startY, endX, endY, startName, endName }) {
   const result = estimateTaxiFare({ startX, startY, endX, endY });
   return {
@@ -371,6 +402,31 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: "condition_assessment_tool",
+    description:
+      "사용자가 음주·피로·부상 등 컨디션 이상을 언급하면 즉시 호출하세요. riskScore 조정을 위한 심각도를 평가합니다. 키워드 예시 — 음주: '술', '마셨', '취했', '만취' / 피로: '피곤', '졸려', '피로' / 부상: '다쳤', '부상', '발목'",
+    input_schema: {
+      type: "object",
+      properties: {
+        conditionType: {
+          type: "string",
+          enum: ["음주", "피로", "부상"],
+          description: "감지된 컨디션 유형",
+        },
+        severity: {
+          type: "string",
+          enum: ["mild", "moderate", "severe"],
+          description: "심각도: mild(가볍게), moderate(적당히), severe(많이/만취/극도)",
+        },
+        detectedKeywords: {
+          type: "string",
+          description: "사용자 메시지에서 감지된 키워드 (예: '술을 좀 마셨')",
+        },
+      },
+      required: ["conditionType", "severity"],
+    },
+  },
+  {
     name: "validate_transit_route",
     description: "Tmap 경로의 지하철 leg마다 Anthropic AI로 막차 종착역을 검증. 도달 불가 시 해당 지점에서 최종 목적지까지 Tmap 대안 경로를 자동 재탐색한다.",
     input_schema: {
@@ -406,6 +462,7 @@ export async function executeMcpTool(name, input) {
     return await transitDisruptionHandler(input);
   if (name === "news_context_tool") return await newsContextHandler(input);
   if (name === "taxi_fare_tool") return taxiFareHandler(input);
+  if (name === "condition_assessment_tool") return conditionAssessmentHandler(input);
   if (name === "validate_transit_route") return await validateTransitRouteHandler(input);
   throw new Error(`알 수 없는 MCP tool: ${name}`);
 }
@@ -429,5 +486,7 @@ export function summarizeMcpTool(name, result) {
     return result.hasInfeasibleLegs
       ? `막차 도달 불가: ${result.lastReachableStation}까지만 가능 — ${result.blockReason}`
       : "모든 지하철 구간 막차 도달 가능";
+  if (name === "condition_assessment_tool")
+    return `컨디션 이상 감지 — ${result.description} (riskScore +${result.riskModifier})`;
   return "";
 }

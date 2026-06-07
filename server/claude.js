@@ -149,6 +149,10 @@ news_context_tool은 항상 호출되며, 결과의 issues 배열에 따라 추�
 - issues에 '도로통제'  → road_incident_tool 호출 (경로 비정상 시 포함)
 - **transit_disruption_tool을 issues와 무관하게 항상 반드시 호출합니다** (출발역 기준). 시간대와 상관없이 매번 막차 여부·실시간 운행 상황을 확인합니다.
 - **조회 시각이 22:00 이후이고 경로에 환승이 있는 경우**, search_transit_route 결과의 각 SUBWAY/BUS leg 도착역(toName) 중 최종 목적지가 아닌 환승역마다 transit_disruption_tool을 추가 호출하여 해당 역의 운행 상황과 lastTrainDestination을 확인하세요.
+- **사용자 메시지에서 컨디션 이상 키워드가 감지되면 condition_assessment_tool을 즉시 호출하세요**:
+  · 음주: "술", "마셨", "취했", "음주", "만취" → mild(좀 마셨), moderate(꽤 마셨/어느 정도), severe(많이 마셨/만취)
+  · 피로: "피곤", "졸려", "졸림", "피로", "눈이 무거" → mild(조금), moderate(많이), severe(너무/극도)
+  · 부상: "다쳤", "다리 다쳐", "부상", "발목" → severity는 맥락에서 판단
 
 **지하철 경로 막차 검증 (필수)**
 - search_transit_route 결과에 SUBWAY leg가 1개 이상 포함된 경우, 반드시 validate_transit_route를 바로 이어서 호출하세요.
@@ -173,6 +177,7 @@ news_context_tool은 항상 호출되며, 결과의 issues 배열에 따라 추�
 - 경로 없음     → 막차 실패 (riskScore 100, verdictTone: rose, verdict: 매우 위험)
 - news_context_tool issues 감지 시 이슈 1개당 riskScore +10 상향 조정하세요
 - 추가 MCP 도구에서 위험 요소 감지 시 riskScore를 추가 상향 조정하세요
+- condition_assessment_tool 결과의 riskModifier를 riskScore에 더하세요. reasons 배열에 컨디션 항목을 추가하세요: { "label": "컨디션", "value": "음주(중간)", "weight": "+20", "tone": "warn" } (value와 weight는 실제 결과에 맞게 조정)
 
 ## riskScore 일관성 원칙
 riskScore는 **경로 조회 결과(search_transit_route)와 도구 결과**만을 기준으로 산출합니다.
